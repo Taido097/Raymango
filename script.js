@@ -1,0 +1,20 @@
+(()=>{
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+addEventListener('load',()=>document.body.classList.add('loaded'),{once:true});
+// Lenis-like inertial smooth scrolling
+if(!reduce&&innerWidth>809){let target=scrollY,current=scrollY,raf=0;const clamp=v=>Math.max(0,Math.min(v,document.documentElement.scrollHeight-innerHeight));addEventListener('wheel',e=>{if(document.body.classList.contains('menu-open'))return;e.preventDefault();target=clamp(target+e.deltaY);if(!raf)raf=requestAnimationFrame(tick)},{passive:false});function tick(){current+=(target-current)*.095;if(Math.abs(target-current)<.35){current=target;raf=0;scrollTo(0,current);return}scrollTo(0,current);raf=requestAnimationFrame(tick)}addEventListener('scroll',()=>{if(!raf)target=current=scrollY},{passive:true});document.querySelectorAll('a[href^="#"]').forEach(a=>a.addEventListener('click',e=>{const el=document.querySelector(a.getAttribute('href'));if(!el)return;e.preventDefault();target=clamp(el.offsetTop);if(!raf)raf=requestAnimationFrame(tick)}))}
+// Intersection reveals and exact 24px / .6s motion language
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.13});document.querySelectorAll('.reveal,.reveal-item,.line').forEach(el=>io.observe(el));
+// Hero slideshow crossfade + scale
+const hs=[...document.querySelectorAll('.hero-slide')],hc=document.getElementById('heroCount');let hi=0;setInterval(()=>{hs[hi].classList.remove('active');hi=(hi+1)%hs.length;hs[hi].classList.add('active');hc.textContent=String(hi+1).padStart(2,'0')},4200);
+// Services active row / corresponding image transition
+const services=[...document.querySelectorAll('.service')],serviceImgs=[...document.querySelectorAll('.service-img')];function activateService(i){services.forEach((s,n)=>s.classList.toggle('active',n===i));serviceImgs.forEach((s,n)=>s.classList.toggle('active',n===i))}services.forEach((s,i)=>{s.addEventListener('mouseenter',()=>activateService(i));s.addEventListener('click',()=>activateService(i));});
+// Carousel with auto-advance, click progress, and swipe/drag
+const slides=[...document.querySelectorAll('.quote-slide')],dots=[...document.querySelectorAll('.carousel-progress button')];let qi=0,timer;function showQ(i){qi=(i+slides.length)%slides.length;slides.forEach((s,n)=>s.classList.toggle('active',n===qi));dots.forEach((d,n)=>{d.classList.toggle('active',n===qi);d.style.animation='none';void d.offsetWidth;d.style.animation=''});clearTimeout(timer);timer=setTimeout(()=>showQ(qi+1),5000)}dots.forEach((d,i)=>d.addEventListener('click',()=>showQ(i)));let px=null;const car=document.getElementById('carousel');car.addEventListener('pointerdown',e=>{px=e.clientX;car.setPointerCapture?.(e.pointerId)});car.addEventListener('pointerup',e=>{if(px==null)return;const dx=e.clientX-px;if(Math.abs(dx)>45)showQ(qi+(dx<0?1:-1));px=null});showQ(0);
+// Scroll-linked image parallax
+const pars=[...document.querySelectorAll('.parallax-img')];let ticking=false;function parallax(){const vh=innerHeight;pars.forEach(img=>{const r=img.parentElement.getBoundingClientRect(),speed=+img.dataset.speed||.08,center=(r.top+r.height/2-vh/2)/vh;img.style.transform=`translate3d(0,${-center*speed*140}px,0) scale(1.08)`});ticking=false}addEventListener('scroll',()=>{if(!ticking){ticking=true;requestAnimationFrame(parallax)}},{passive:true});parallax();
+// Footer spring from far below, mirroring Orkan's large y spring reveal
+const fw=document.getElementById('footerWord');new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)fw.classList.add('in')}),{threshold:.18}).observe(fw);
+// Mobile menu slide + stagger
+const mb=document.querySelector('.menu-btn'),mm=document.querySelector('.mobile-menu');function toggleMenu(force){const open=force??!mm.classList.contains('open');mm.classList.toggle('open',open);document.body.classList.toggle('menu-open',open);mb.textContent=open?'CLOSE':'MENU'}mb.addEventListener('click',()=>toggleMenu());mm.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>toggleMenu(false)));
+})();
