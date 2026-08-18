@@ -1,8 +1,9 @@
 (()=>{
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const ORKAN_EASE='cubic-bezier(.12,.23,.27,1)';
+const clamp01=v=>Math.max(0,Math.min(1,v));
 
-// Exact Orkan appear values captured from the supplied Framer build.
+/* Orkan motion/layout values captured from the supplied Framer build. */
 const motionStyle=document.createElement('style');
 motionStyle.textContent=`
 .reveal-item{opacity:.001;transform:translateY(24px);transition-property:opacity,transform;transition-duration:.6s;transition-timing-function:${ORKAN_EASE};transition-delay:0s;will-change:transform,opacity}
@@ -12,14 +13,56 @@ motionStyle.textContent=`
 .fit-image{object-fit:contain!important;object-position:center!important;width:100%!important;height:100%!important;margin:0!important;transform:none!important;filter:none!important}
 .work-card:hover .fit-image,.testimonial.active .fit-image{transform:none!important}
 .hero-bg img{will-change:transform}
+
+/* Raymond's source portrait is a 3639x5459 image and was originally set to contain. */
+.about-bg{background:#000!important}
+.about-bg .profile-fit{object-fit:contain!important;object-position:center center!important;width:100%!important;height:100%!important;margin:0!important;transform:none!important;filter:brightness(.8)!important}
+
+/* Orkan footer: black 70vh end panel, 24px inset, three-column links, five-image ticker. */
+.orkan-footer-shell{height:70vh;min-height:500px;position:relative;z-index:2;background:#000;overflow:hidden;will-change:transform}
+.orkan-footer-shell .footer{height:100%!important;min-height:0!important;background:#000!important;color:#fff!important;padding:24px!important;display:flex!important;flex-direction:column!important;justify-content:space-between!important;overflow:visible!important}
+.orkan-footer-shell .footer a{color:#fff!important}
+.orkan-footer-shell .footer-top{max-width:none!important;width:100%!important;margin:0!important;display:flex!important;flex-direction:row!important;align-items:flex-start!important;justify-content:center!important;gap:8px!important}
+.orkan-footer-shell .footer-top>*{flex:1 0 0!important;width:1px!important}
+.orkan-footer-shell .footer-col{gap:12px!important;font-size:11px!important}
+.orkan-footer-shell .footer-nav{display:flex!important;flex-direction:column!important;align-items:center!important;gap:12px!important}
+.orkan-footer-shell .footer-social{display:flex!important;justify-content:flex-end!important;gap:12px!important;font-size:11px!important}
+.orkan-footer-shell .footer-ticker{overflow:hidden!important;width:100%!important;margin:0!important}
+.orkan-footer-shell .ticker-track{gap:16px!important;animation-timing-function:linear!important;animation-iteration-count:infinite!important;will-change:transform}
+.orkan-footer-shell .ticker-track img{height:216px!important;object-fit:cover}
+.orkan-footer-shell .footer-bottom{max-width:1600px!important;width:100%!important;margin:0!important;padding:0!important;border:0!important;color:#fff!important;opacity:.9;font-size:10px!important}
+@media(max-width:809px){
+ .orkan-footer-shell{height:auto;min-height:70vh;overflow:hidden}
+ .orkan-footer-shell .footer{height:auto!important;min-height:70vh!important;padding:48px 16px 24px!important;gap:16px!important;justify-content:flex-end!important}
+ .orkan-footer-shell .footer-top{flex-direction:column!important;gap:16px!important}
+ .orkan-footer-shell .footer-top>*{width:100%!important;flex:none!important}
+ .orkan-footer-shell .footer-nav{align-items:flex-start!important}
+ .orkan-footer-shell .footer-social{justify-content:flex-start!important}
+ .orkan-footer-shell .ticker-track{gap:8px!important}
+ .orkan-footer-shell .ticker-track img{height:110px!important}
+}
 `;
 document.head.appendChild(motionStyle);
 
-// Framer/Orkan entrance reveals: y 24 -> 0, opacity .001 -> 1, .6s tween.
+/* Fix Raymond profile crop before parallax is initialized. */
+const raymondProfile=document.querySelector('.about-bg img');
+if(raymondProfile)raymondProfile.classList.add('profile-fit');
+
+/* Recreate Orkan's actual footer wrapper. Framer uses a 70vh parent around the black footer. */
+const footer=document.querySelector('.footer');
+let footerShell=null;
+if(footer&&!footer.parentElement.classList.contains('orkan-footer-shell')){
+  footerShell=document.createElement('div');
+  footerShell.className='orkan-footer-shell';
+  footer.parentNode.insertBefore(footerShell,footer);
+  footerShell.appendChild(footer);
+}else if(footer){footerShell=footer.parentElement}
+
+/* Orkan entrance reveals: y 24 -> 0, opacity .001 -> 1, .6s tween. */
 const io=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.12});
 document.querySelectorAll('.reveal,.reveal-item').forEach(el=>io.observe(el));
 
-// Small spring solver matching Framer's captured spring constants.
+/* Small spring solver matching Framer's captured spring constants. */
 function spring(el,{from=1,to=0,stiffness=200,damping=70,mass=1,onFrame,onDone}){
   if(reduce){onFrame(to);onDone?.();return}
   let x=from,v=0,last=performance.now();
@@ -33,14 +76,14 @@ function spring(el,{from=1,to=0,stiffness=200,damping=70,mass=1,onFrame,onDone})
   requestAnimationFrame(frame);
 }
 
-// Orkan hero image: scale 1.04 -> 1, spring stiffness 200 / damping 70 / mass 1.
+/* Orkan hero image: scale 1.04 -> 1, spring stiffness 200 / damping 70 / mass 1. */
 const heroImg=document.querySelector('.hero-bg img');
 if(heroImg){
   heroImg.style.transform='scale(1.04)';
   requestAnimationFrame(()=>spring(heroImg,{from:1.04,to:1,stiffness:200,damping:70,mass:1,onFrame:v=>heroImg.style.transform=`scale(${v})`}));
 }
 
-// Lenis-style inertial wheel scrolling used by the Orkan capture.
+/* Lenis-style inertial scrolling from the Orkan capture. */
 if(!reduce&&innerWidth>809){
   let target=scrollY,current=scrollY,raf=0;
   const clamp=v=>Math.max(0,Math.min(v,document.documentElement.scrollHeight-innerHeight));
@@ -56,15 +99,14 @@ if(!reduce&&innerWidth>809){
   document.querySelectorAll('a[href^="#"]').forEach(a=>a.addEventListener('click',e=>{const el=document.querySelector(a.getAttribute('href'));if(!el)return;e.preventDefault();animateTo(el.offsetTop,1.2)}));
 }
 
-// Keep the Orkan frames, but preserve Raymango compositions when cover would crop too much.
-const fitCandidates=[...document.querySelectorAll('.media img,.service-image img,.testimonial-image img,.final-image-sticky img,.ticker-track img')];
+/* Preserve Raymango compositions when cover would crop too much. */
+const fitCandidates=[...document.querySelectorAll('.media img,.service-image img,.testimonial-image img,.final-image-sticky img')];
 function decideFit(img){
   const apply=()=>{
     const box=img.parentElement?.getBoundingClientRect();
     if(!box||!box.width||!box.height||!img.naturalWidth||!img.naturalHeight)return;
     const ir=img.naturalWidth/img.naturalHeight,fr=box.width/box.height;
     const retained=Math.min(ir/fr,fr/ir);
-    // If cover would discard roughly 18%+ of one axis, show the full photograph.
     if(retained<.82)img.classList.add('fit-image');else img.classList.remove('fit-image');
   };
   if(img.complete)apply();else img.addEventListener('load',apply,{once:true});
@@ -72,29 +114,62 @@ function decideFit(img){
 fitCandidates.forEach(decideFit);
 let fitTimer;addEventListener('resize',()=>{clearTimeout(fitTimer);fitTimer=setTimeout(()=>fitCandidates.forEach(decideFit),120)});
 
-// Orkan scroll-linked background/service image movement. Do not parallax contained images.
+/* Orkan scroll-linked image movement; Raymond's contained portrait stays uncropped. */
 let ticking=false;const parallaxEls=[...document.querySelectorAll('.parallax-img,.service-parallax')];
-function parallax(){
+function parallaxAndFooter(){
   const vh=innerHeight;
   parallaxEls.forEach(img=>{
-    if(img.classList.contains('fit-image')){img.style.transform='none';return}
+    if(img.classList.contains('profile-fit')||img.classList.contains('fit-image')){img.style.transform='none';return}
     const p=img.parentElement.getBoundingClientRect(),c=(p.top+p.height/2-vh/2)/vh;
     const service=img.classList.contains('service-parallax');
     img.style.transform=`translate3d(0,${-c*(service?34:20)}px,0) scale(${service?1.12:1.04})`;
   });
+
+  /* Exact Orkan footer transform effect: y -200 -> 0 while the 70vh footer enters view. */
+  if(footerShell){
+    const r=footerShell.getBoundingClientRect();
+    const progress=clamp01((vh-r.top)/vh);
+    const y=-200*(1-progress);
+    footerShell.style.transform=`translate3d(0,${y}px,0)`;
+  }
   ticking=false;
 }
-addEventListener('scroll',()=>{if(!ticking){ticking=true;requestAnimationFrame(parallax)}},{passive:true});parallax();
+addEventListener('scroll',()=>{if(!ticking){ticking=true;requestAnimationFrame(parallaxAndFooter)}},{passive:true});
+addEventListener('resize',()=>requestAnimationFrame(parallaxAndFooter),{passive:true});
+parallaxAndFooter();
 
-// Orkan-style carousel: horizontal motion, 5-second progression, drag/swipe.
+/* Orkan testimonial motion: horizontal transition + 5-second auto progression + swipe. */
 const slides=[...document.querySelectorAll('.testimonial')],dots=[...document.querySelectorAll('.testimonial-dots button')];let idx=0,timer,down=null;
 function show(i){idx=(i+slides.length)%slides.length;slides.forEach((s,n)=>s.classList.toggle('active',n===idx));dots.forEach((d,n)=>d.classList.toggle('active',n===idx));clearTimeout(timer);timer=setTimeout(()=>show(idx+1),5000)}
 dots.forEach((d,i)=>d.addEventListener('click',()=>show(i)));const stage=document.getElementById('carousel');stage?.addEventListener('pointerdown',e=>down=e.clientX);stage?.addEventListener('pointerup',e=>{if(down===null)return;const dx=e.clientX-down;if(Math.abs(dx)>45)show(idx+(dx<0?1:-1));down=null});show(0);
 
-// Orkan's large lower-page spring: y 1500 -> 0, stiffness 400 / damping 80 / mass 1.
-const footerBottom=document.querySelector('.footer-bottom');
-if(footerBottom){footerBottom.style.transform='translateY(1500px)';footerBottom.style.opacity='1';requestAnimationFrame(()=>spring(footerBottom,{from:1500,to:0,stiffness:400,damping:80,mass:1,onFrame:v=>{footerBottom.style.transform=`translateY(${v}px)`;footerBottom.style.opacity=String(.9+.1*Math.min(1,v/1500))},onDone:()=>{footerBottom.style.transform='translateY(0)';footerBottom.style.opacity='.9'}}))}
+/* Orkan ticker is 5 images, 16px gap, velocity exactly 25px/s (8px gap on mobile). */
+const ticker=document.querySelector('.ticker-track');
+function syncTickerVelocity(){
+  if(!ticker)return;
+  const cycle=ticker.scrollWidth/2;
+  if(cycle>0)ticker.style.animationDuration=`${cycle/25}s`;
+}
+if(ticker){
+  const imgs=[...ticker.querySelectorAll('img')];
+  let pending=imgs.filter(i=>!i.complete).length;
+  if(!pending)requestAnimationFrame(syncTickerVelocity);
+  else imgs.forEach(i=>{if(!i.complete)i.addEventListener('load',()=>{if(--pending===0)syncTickerVelocity()},{once:true})});
+  addEventListener('resize',syncTickerVelocity,{passive:true});
+}
 
-// Mobile menu retains Orkan's panel + stagger behavior.
+/* Captured Orkan copyright appear: y 1500 -> 0, spring 400/80. Trigger when footer first becomes visible. */
+const footerBottom=document.querySelector('.footer-bottom');
+if(footerBottom&&footerShell){
+  footerBottom.style.transform='translateY(1500px)';footerBottom.style.opacity='1';
+  const footerIO=new IntersectionObserver(entries=>entries.forEach(e=>{
+    if(!e.isIntersecting)return;
+    footerIO.disconnect();
+    spring(footerBottom,{from:1500,to:0,stiffness:400,damping:80,mass:1,onFrame:v=>{footerBottom.style.transform=`translateY(${v}px)`;footerBottom.style.opacity=String(.9+.1*Math.min(1,v/1500))},onDone:()=>{footerBottom.style.transform='translateY(0)';footerBottom.style.opacity='.9'}});
+  }),{threshold:.05});
+  footerIO.observe(footerShell);
+}
+
+/* Mobile menu panel + stagger. */
 const btn=document.querySelector('.menu-btn'),menu=document.querySelector('.mobile-menu');function setMenu(open){menu?.classList.toggle('open',open);document.body.classList.toggle('menu-open',open);if(btn)btn.textContent=open?'CLOSE':'MENU'}btn?.addEventListener('click',()=>setMenu(!menu?.classList.contains('open')));menu?.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>setMenu(false)));
 })();
