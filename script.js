@@ -2,6 +2,7 @@
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const ORKAN_EASE='cubic-bezier(.12,.23,.27,1)';
 const ORANGE='#f2561d';
+const HERO_IMAGE='/images/RAY56200.jpg';
 const RAYMOND_IMAGE='https://images.squarespace-cdn.com/content/v1/66a856f13424f06b8fa96d9a/12aa1fc0-724f-4c81-8b99-71a916d0b227/RAY68424.jpg?format=2500w';
 /* Clean Raymango photograph used for the image stage before the orange brand lockup. */
 const END_IMAGE='/images/RAY69009.jpg';
@@ -65,8 +66,8 @@ const oldVideo=heroBg?.querySelector('video');
 if(heroBg){
   if(oldVideo)oldVideo.remove();
   if(!heroImg){heroImg=document.createElement('img');heroBg.prepend(heroImg)}
-  heroImg.src=RAYMOND_IMAGE;
-  heroImg.alt='Raymond Do of Raymango';
+  heroImg.src=HERO_IMAGE;
+  heroImg.alt='Raymango cinematic portrait';
   heroImg.className='raymond-hero';
 }
 const raymondProfile=document.querySelector('.about-bg img');
