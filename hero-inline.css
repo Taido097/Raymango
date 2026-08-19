@@ -1,1 +1,32 @@
-/* Hero image now loads from /images/RAY56200.jpg through the normal image element. */
+/* Final hero override. This stylesheet is already linked by index.html.
+   Use a higher-specificity !important rule so script.js's later
+   `background:#000!important` shorthand cannot erase the hero image. */
+html body main .hero .hero-bg{
+  background-color:#000!important;
+  background-image:url('/images/RAY56200.jpg')!important;
+  background-size:cover!important;
+  background-position:center 48%!important;
+  background-repeat:no-repeat!important;
+  overflow:hidden!important;
+  transform-origin:center center;
+  animation:rayHeroStillIn 1.15s cubic-bezier(.12,.23,.27,1) both;
+}
+
+html body main .hero .hero-bg>img{
+  display:none!important;
+  opacity:0!important;
+  visibility:hidden!important;
+}
+
+@keyframes rayHeroStillIn{
+  from{transform:scale(1.04)}
+  to{transform:scale(1)}
+}
+
+@media(max-width:809px){
+  html body main .hero .hero-bg{background-position:center 45%!important}
+}
+
+@media(prefers-reduced-motion:reduce){
+  html body main .hero .hero-bg{animation:none;transform:scale(1)}
+}
