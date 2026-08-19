@@ -16,3 +16,9 @@
 /* Hero brand lockup requested: independent from the fixed nav. */
 .hero::before{content:"Raymango";position:absolute;top:112px;left:24px;z-index:6;color:#f2561d;font:700 clamp(32px,4.2vw,72px)/.9 Mattone,sans-serif;letter-spacing:-.055em;pointer-events:none}
 @media(max-width:809px){.hero::before{top:84px;left:16px;font-size:38px}}
+
+/* Exact uploaded RAY56200 hero image. Keep Raymond's profile image unchanged in About. */
+.hero-bg{background-image:url('/images/RAY56200.jpg')!important;background-size:cover!important;background-position:center 48%!important;background-repeat:no-repeat!important;transform-origin:center center;animation:rayHeroIn 1.15s var(--ease) both}
+.hero-bg>img{opacity:0!important;visibility:hidden!important}
+@keyframes rayHeroIn{from{transform:scale(1.04)}to{transform:scale(1)}}
+@media(max-width:809px){.hero-bg{background-position:center 45%!important}}
