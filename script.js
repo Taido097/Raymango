@@ -12,14 +12,21 @@ motionStyle.textContent=`
 .fit-image{object-fit:contain!important;object-position:center!important;width:100%!important;height:100%!important;margin:0!important;transform:none!important;filter:none!important}
 .work-card:hover .fit-image,.testimonial.active .fit-image{transform:none!important}
 
-/* Same Raymond image in both opening sections. */
 .hero-bg,.about-bg{background:#000!important;overflow:hidden!important}
 .hero-bg .raymond-hero{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;margin:0!important;object-fit:cover!important;object-position:center 38%!important;filter:grayscale(1) contrast(1.08) brightness(.68)!important;will-change:transform}
 .about-bg .raymond-profile{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;margin:0!important;object-fit:cover!important;object-position:center 38%!important;filter:grayscale(1) contrast(1.04) brightness(.74)!important;will-change:transform}
 .hero-content{color:#f2561d!important}
 .hero-copy,.hero-sign{color:#f2561d!important}
 
-/* Keep the continuous footer strip horizontal, with portrait frames. */
+/* Orkan ending: sticky full-viewport brand layer over the sticky image. */
+.final-image{height:200vh!important;position:relative!important;background:#f2561d!important}
+.final-image-sticky{position:sticky!important;top:0!important;height:100vh!important;overflow:hidden!important;filter:brightness(.8)!important}
+.final-image-sticky img{width:100%!important;height:100%!important;object-fit:cover!important;transform:scale(1.02);will-change:transform}
+.final-word{position:sticky!important;top:0!important;margin-top:-100vh!important;height:100vh!important;width:100%!important;padding:0 24px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:0!important;color:#f2561d!important;mix-blend-mode:normal!important;font-family:Mattone,sans-serif!important;font-size:152px!important;font-weight:700!important;line-height:.8!important;letter-spacing:-.04em!important;pointer-events:none!important;z-index:4!important;overflow:hidden!important}
+.final-word .orkan-letter{display:block;flex:none;white-space:pre;color:#f2561d;will-change:transform,opacity}
+@media(max-width:1199px){.final-word{font-size:96px!important}}
+@media(max-width:809px){.final-word{font-size:48px!important;padding:0 16px!important}}
+
 .orkan-footer-shell .ticker-track{align-items:center!important}
 .orkan-footer-shell .ticker-track img{width:150px!important;min-width:150px!important;height:216px!important;flex:0 0 150px!important;object-fit:cover!important;object-position:center!important}
 @media(max-width:809px){.orkan-footer-shell .ticker-track img{width:82px!important;min-width:82px!important;height:110px!important;flex-basis:82px!important}}
@@ -47,7 +54,6 @@ motionStyle.textContent=`
 `;
 document.head.appendChild(motionStyle);
 
-/* Replace any previous hero video with Raymond's photo and use the same source in About. */
 const heroBg=document.querySelector('.hero-bg');
 let heroImg=heroBg?.querySelector('img');
 const oldVideo=heroBg?.querySelector('video');
@@ -69,6 +75,13 @@ const heroCopy=document.querySelector('.hero-copy');
 const heroSign=document.querySelector('.hero-sign');
 if(heroCopy)heroCopy.textContent='Raymango captures weddings through emotion, movement, light, and atmosphere—creating photographs that feel cinematic, honest, and deeply personal.';
 if(heroSign)heroSign.textContent='CALIFORNIA, UNITED STATES';
+
+/* Split RAYMANGO into individual letters like Orkan's ORKAN ending component. */
+const finalWord=document.querySelector('.final-word');
+if(finalWord){
+  finalWord.setAttribute('aria-label','RAYMANGO');
+  finalWord.innerHTML='RAYMANGO'.split('').map((letter,i)=>`<span class="orkan-letter" data-letter="${i}">${letter}</span>`).join('');
+}
 
 const footer=document.querySelector('.footer');
 let footerShell=null;
@@ -140,6 +153,17 @@ function onScrollMotion(){
     const p=img.parentElement.getBoundingClientRect(),c=(p.top+p.height/2-vh/2)/vh;
     img.style.transform=`translate3d(0,${-c*34}px,0) scale(1.12)`;
   });
+
+  /* Keep the brand layer pinned exactly like the Orkan sticky name overlay. */
+  if(finalWord){
+    const r=finalWord.parentElement.getBoundingClientRect();
+    const progress=Math.max(0,Math.min(1,(-r.top)/(Math.max(1,r.height-innerHeight))));
+    finalWord.querySelectorAll('.orkan-letter').forEach((letter,i)=>{
+      const offset=(i-(7/2))*2.5*(1-progress);
+      letter.style.transform=`translate3d(${offset}px,0,0)`;
+      letter.style.opacity=String(.92+.08*progress);
+    });
+  }
   ticking=false;
 }
 addEventListener('scroll',()=>{if(!ticking){ticking=true;requestAnimationFrame(onScrollMotion)}},{passive:true});
