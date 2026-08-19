@@ -4,7 +4,7 @@ const ORKAN_EASE='cubic-bezier(.12,.23,.27,1)';
 const ORANGE='#f2561d';
 const RAYMOND_IMAGE='https://images.squarespace-cdn.com/content/v1/66a856f13424f06b8fa96d9a/12aa1fc0-724f-4c81-8b99-71a916d0b227/RAY68424.jpg?format=2500w';
 /* Clean Raymango photograph used for the image stage before the orange brand lockup. */
-const END_IMAGE='https://images.squarespace-cdn.com/content/v1/66a856f13424f06b8fa96d9a/05294574-3810-4058-8c6d-8932ce064c33/RAY59990.jpg?format=2500w';
+const END_IMAGE='/images/RAY69009.jpg';
 const clamp01=v=>Math.max(0,Math.min(1,v));
 const smooth=t=>t*t*(3-2*t);
 
