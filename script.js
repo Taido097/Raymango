@@ -1,6 +1,9 @@
 (()=>{
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const ORKAN_EASE='cubic-bezier(.12,.23,.27,1)';
+const VIDEO_BASE='https://video.squarespace-cdn.com/content/v1/66a856f13424f06b8fa96d9a/ec8a32f9-7f3a-4f19-b684-1cf8f570d3b8';
+const VIDEO_PLAYLIST=`${VIDEO_BASE}/playlist.m3u8`;
+const VIDEO_POSTER=`${VIDEO_BASE}/thumbnail`;
 
 const motionStyle=document.createElement('style');
 motionStyle.textContent=`
@@ -11,13 +14,20 @@ motionStyle.textContent=`
 .fit-image{object-fit:contain!important;object-position:center!important;width:100%!important;height:100%!important;margin:0!important;transform:none!important;filter:none!important}
 .work-card:hover .fit-image,.testimonial.active .fit-image{transform:none!important}
 
-/* Full-bleed monochrome Raymango hero. */
+/* Real Raymango homepage video, full-bleed like Orkan's opening media. */
 .hero-bg{background:#000!important;overflow:hidden!important}
-.hero-bg .hero-landscape{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;margin:0!important;object-fit:cover!important;object-position:center center!important;filter:grayscale(1) contrast(1.08) brightness(.72)!important;will-change:transform}
+.hero-bg .hero-video{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;object-fit:cover!important;object-position:center center!important;filter:brightness(.72)!important;will-change:transform;background:#000}
 
-/* Raymond profile remains uncropped. */
-.about-bg{background:#000!important}
-.about-bg .profile-fit{object-fit:contain!important;object-position:center center!important;width:100%!important;height:100%!important;margin:0!important;transform:none!important;filter:brightness(.8)!important}
+/* Raymond section now fills the complete frame edge-to-edge. */
+.about-bg{background:#000!important;overflow:hidden!important}
+.about-bg .profile-fill{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;margin:0!important;object-fit:cover!important;object-position:center center!important;filter:brightness(.78)!important;will-change:transform}
+
+/* Keep the continuous footer strip horizontal, but use portrait frames. */
+.orkan-footer-shell .ticker-track{align-items:center!important}
+.orkan-footer-shell .ticker-track img{width:150px!important;min-width:150px!important;height:216px!important;flex:0 0 150px!important;object-fit:cover!important;object-position:center!important}
+@media(max-width:809px){
+ .orkan-footer-shell .ticker-track img{width:82px!important;min-width:82px!important;height:110px!important;flex-basis:82px!important}
+}
 
 /* Orkan footer geometry and initial entrance state. */
 .orkan-footer-shell{height:70vh;position:relative;z-index:2;background:#000;overflow:hidden;will-change:transform;transform:translate3d(0,-200px,0)}
@@ -30,7 +40,6 @@ motionStyle.textContent=`
 .orkan-footer-shell .footer-social{display:flex!important;justify-content:flex-end!important;gap:12px!important;font-size:11px!important}
 .orkan-footer-shell .footer-ticker{overflow:hidden!important;width:100%!important;margin:0!important}
 .orkan-footer-shell .ticker-track{gap:16px!important;animation-timing-function:linear!important;animation-iteration-count:infinite!important;will-change:transform}
-.orkan-footer-shell .ticker-track img{height:216px!important;object-fit:cover!important}
 .orkan-footer-shell .footer-bottom{max-width:1600px!important;width:100%!important;margin:0!important;padding:0!important;border:0!important;color:#fff!important;opacity:.9!important;font-size:10px!important;transform:none!important}
 @media(max-width:809px){
  .orkan-footer-shell{height:70vh;overflow:hidden}
@@ -40,20 +49,63 @@ motionStyle.textContent=`
  .orkan-footer-shell .footer-nav{align-items:flex-start!important}
  .orkan-footer-shell .footer-social{justify-content:flex-start!important}
  .orkan-footer-shell .ticker-track{gap:8px!important}
- .orkan-footer-shell .ticker-track img{height:110px!important}
 }
 `;
 document.head.appendChild(motionStyle);
 
-/* Landscape Raymango image that can fill the Orkan hero naturally. */
-const heroImg=document.querySelector('.hero-bg img');
-if(heroImg){
-  heroImg.classList.add('hero-landscape');
-  heroImg.src='https://images.squarespace-cdn.com/content/v1/66a856f13424f06b8fa96d9a/7a0a9666-a4eb-4233-b92a-4f3493b70367/RAY68647.jpg?format=2500w';
-  heroImg.alt='Raymango cinematic wedding photography';
+/* Replace the temporary hero image with Raymango's actual Squarespace-hosted homepage video. */
+const heroBg=document.querySelector('.hero-bg');
+const oldHeroImg=heroBg?.querySelector('img');
+let heroVideo=null;
+if(heroBg){
+  heroVideo=document.createElement('video');
+  heroVideo.className='hero-video';
+  heroVideo.autoplay=true;
+  heroVideo.muted=true;
+  heroVideo.loop=true;
+  heroVideo.playsInline=true;
+  heroVideo.setAttribute('webkit-playsinline','');
+  heroVideo.setAttribute('aria-hidden','true');
+  heroVideo.poster=VIDEO_POSTER;
+  if(oldHeroImg)oldHeroImg.replaceWith(heroVideo); else heroBg.prepend(heroVideo);
+
+  const useNative=heroVideo.canPlayType('application/vnd.apple.mpegurl');
+  if(useNative){
+    heroVideo.src=VIDEO_PLAYLIST;
+    heroVideo.play().catch(()=>{});
+  }else{
+    const loadHls=()=>{
+      if(window.Hls?.isSupported()){
+        const hls=new window.Hls({enableWorker:true,lowLatencyMode:false});
+        hls.loadSource(VIDEO_PLAYLIST);
+        hls.attachMedia(heroVideo);
+        hls.on(window.Hls.Events.MANIFEST_PARSED,()=>heroVideo.play().catch(()=>{}));
+      }else{
+        heroVideo.poster=VIDEO_POSTER;
+      }
+    };
+    if(window.Hls)loadHls();
+    else{
+      const s=document.createElement('script');
+      s.src='https://cdn.jsdelivr.net/npm/hls.js@1.6.13/dist/hls.min.js';
+      s.onload=loadHls;
+      document.head.appendChild(s);
+    }
+  }
 }
+
+/* Orkan-like concise opening copy, rewritten for Raymango. */
+const heroCopy=document.querySelector('.hero-copy');
+const heroSign=document.querySelector('.hero-sign');
+if(heroCopy)heroCopy.textContent='Raymango is a cinematic wedding photography and film studio capturing raw emotion, movement, atmosphere, and the quiet moments that make every celebration feel personal.';
+if(heroSign)heroSign.textContent='CALIFORNIA, UNITED STATES';
+
+/* Raymond's portrait now fills the whole second section. */
 const raymondProfile=document.querySelector('.about-bg img');
-if(raymondProfile)raymondProfile.classList.add('profile-fit');
+if(raymondProfile){
+  raymondProfile.classList.remove('profile-fit');
+  raymondProfile.classList.add('profile-fill');
+}
 
 const footer=document.querySelector('.footer');
 let footerShell=null;
@@ -80,13 +132,12 @@ function spring({from=1,to=0,stiffness=200,damping=70,mass=1,onFrame,onDone}){
   requestAnimationFrame(frame);
 }
 
-/* Orkan hero appear: scale 1.04 -> 1, spring 200/70/1. */
-if(heroImg){
-  heroImg.style.transform='scale(1.04)';
-  requestAnimationFrame(()=>spring({from:1.04,to:1,stiffness:200,damping:70,mass:1,onFrame:v=>heroImg.style.transform=`scale(${v})`}));
+/* Same Orkan opening spring, now applied to the video itself. */
+if(heroVideo){
+  heroVideo.style.transform='scale(1.04)';
+  requestAnimationFrame(()=>spring({from:1.04,to:1,stiffness:200,damping:70,mass:1,onFrame:v=>heroVideo.style.transform=`scale(${v})`}));
 }
 
-/* Footer is an in-view entrance, not a scroll-scrubbed transform. */
 if(footerShell){
   if(reduce){footerShell.style.transform='translate3d(0,0,0)'}
   else{
@@ -126,7 +177,7 @@ let ticking=false;const parallaxEls=[...document.querySelectorAll('.parallax-img
 function onScrollMotion(){
   const vh=innerHeight;
   parallaxEls.forEach(img=>{
-    if(img.classList.contains('profile-fit')||img.classList.contains('fit-image')){img.style.transform='none';return}
+    if(img.classList.contains('fit-image')){img.style.transform='none';return}
     const p=img.parentElement.getBoundingClientRect(),c=(p.top+p.height/2-vh/2)/vh;
     const service=img.classList.contains('service-parallax');
     img.style.transform=`translate3d(0,${-c*(service?34:20)}px,0) scale(${service?1.12:1.04})`;
