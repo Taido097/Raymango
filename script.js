@@ -1,7 +1,6 @@
 (()=>{
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const ORKAN_EASE='cubic-bezier(.12,.23,.27,1)';
-const clamp01=v=>Math.max(0,Math.min(1,v));
 
 const motionStyle=document.createElement('style');
 motionStyle.textContent=`
@@ -12,15 +11,15 @@ motionStyle.textContent=`
 .fit-image{object-fit:contain!important;object-position:center!important;width:100%!important;height:100%!important;margin:0!important;transform:none!important;filter:none!important}
 .work-card:hover .fit-image,.testimonial.active .fit-image{transform:none!important}
 
-/* Hero: full-bleed landscape treatment like Orkan. */
+/* Full-bleed monochrome Raymango hero. */
 .hero-bg{background:#000!important;overflow:hidden!important}
-.hero-bg .hero-landscape{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;margin:0!important;object-fit:cover!important;object-position:center center!important;filter:brightness(.8)!important;will-change:transform}
+.hero-bg .hero-landscape{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;margin:0!important;object-fit:cover!important;object-position:center center!important;filter:grayscale(1) contrast(1.08) brightness(.72)!important;will-change:transform}
 
-/* Raymond's profile stays uncropped, matching his original Raymango page. */
+/* Raymond profile remains uncropped. */
 .about-bg{background:#000!important}
 .about-bg .profile-fit{object-fit:contain!important;object-position:center center!important;width:100%!important;height:100%!important;margin:0!important;transform:none!important;filter:brightness(.8)!important}
 
-/* Orkan footer geometry. */
+/* Orkan footer geometry and initial entrance state. */
 .orkan-footer-shell{height:70vh;position:relative;z-index:2;background:#000;overflow:hidden;will-change:transform;transform:translate3d(0,-200px,0)}
 .orkan-footer-shell .footer{height:100%!important;min-height:0!important;background:#000!important;color:#fff!important;padding:24px!important;display:flex!important;flex-direction:column!important;justify-content:space-between!important;overflow:visible!important}
 .orkan-footer-shell .footer a{color:#fff!important}
@@ -46,17 +45,16 @@ motionStyle.textContent=`
 `;
 document.head.appendChild(motionStyle);
 
-/* Use Raymango's wider scenic photographer image for a natural landscape hero fill. */
+/* Landscape Raymango image that can fill the Orkan hero naturally. */
 const heroImg=document.querySelector('.hero-bg img');
 if(heroImg){
   heroImg.classList.add('hero-landscape');
   heroImg.src='https://images.squarespace-cdn.com/content/v1/66a856f13424f06b8fa96d9a/7a0a9666-a4eb-4233-b92a-4f3493b70367/RAY68647.jpg?format=2500w';
-  heroImg.alt='Raymango photographer in a cinematic landscape';
+  heroImg.alt='Raymango cinematic wedding photography';
 }
 const raymondProfile=document.querySelector('.about-bg img');
 if(raymondProfile)raymondProfile.classList.add('profile-fit');
 
-/* Exact Orkan 70vh footer wrapper. */
 const footer=document.querySelector('.footer');
 let footerShell=null;
 if(footer&&!footer.parentElement.classList.contains('orkan-footer-shell')){
@@ -66,7 +64,6 @@ if(footer&&!footer.parentElement.classList.contains('orkan-footer-shell')){
   footerShell.appendChild(footer);
 }else if(footer){footerShell=footer.parentElement}
 
-/* Orkan entrance reveals: 24px -> 0, opacity .001 -> 1, .6s. */
 const io=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.12});
 document.querySelectorAll('.reveal,.reveal-item').forEach(el=>io.observe(el));
 
@@ -83,13 +80,28 @@ function spring({from=1,to=0,stiffness=200,damping=70,mass=1,onFrame,onDone}){
   requestAnimationFrame(frame);
 }
 
-/* Orkan hero spring: scale 1.04 -> 1, stiffness 200 / damping 70 / mass 1. */
+/* Orkan hero appear: scale 1.04 -> 1, spring 200/70/1. */
 if(heroImg){
   heroImg.style.transform='scale(1.04)';
   requestAnimationFrame(()=>spring({from:1.04,to:1,stiffness:200,damping:70,mass:1,onFrame:v=>heroImg.style.transform=`scale(${v})`}));
 }
 
-/* Lenis-like inertial scrolling. */
+/* Footer is an in-view entrance, not a scroll-scrubbed transform. */
+if(footerShell){
+  if(reduce){footerShell.style.transform='translate3d(0,0,0)'}
+  else{
+    const footerIO=new IntersectionObserver(entries=>entries.forEach(e=>{
+      if(!e.isIntersecting)return;
+      footerIO.disconnect();
+      footerShell.animate(
+        [{transform:'translate3d(0,-200px,0)'},{transform:'translate3d(0,0,0)'}],
+        {duration:720,easing:ORKAN_EASE,fill:'forwards'}
+      );
+    }),{threshold:.01,rootMargin:'0px 0px -2% 0px'});
+    footerIO.observe(footerShell);
+  }
+}
+
 if(!reduce&&innerWidth>809){
   let target=scrollY,current=scrollY,raf=0;
   const clamp=v=>Math.max(0,Math.min(v,document.documentElement.scrollHeight-innerHeight));
@@ -102,7 +114,6 @@ if(!reduce&&innerWidth>809){
   document.querySelectorAll('a[href^="#"]').forEach(a=>a.addEventListener('click',e=>{const el=document.querySelector(a.getAttribute('href'));if(!el)return;e.preventDefault();animateTo(el.offsetTop,1.2)}));
 }
 
-/* Preserve full compositions in non-hero frames only when cover is too destructive. */
 const fitCandidates=[...document.querySelectorAll('.media img,.service-image img,.testimonial-image img,.final-image-sticky img')];
 function decideFit(img){
   const apply=()=>{const box=img.parentElement?.getBoundingClientRect();if(!box||!box.width||!box.height||!img.naturalWidth||!img.naturalHeight)return;const ir=img.naturalWidth/img.naturalHeight,fr=box.width/box.height;const retained=Math.min(ir/fr,fr/ir);img.classList.toggle('fit-image',retained<.82)};
@@ -110,8 +121,6 @@ function decideFit(img){
 }
 fitCandidates.forEach(decideFit);
 let fitTimer;addEventListener('resize',()=>{clearTimeout(fitTimer);fitTimer=setTimeout(()=>fitCandidates.forEach(decideFit),120)});
-
-function documentTop(el){let y=0,n=el;while(n){y+=n.offsetTop||0;n=n.offsetParent}return y}
 
 let ticking=false;const parallaxEls=[...document.querySelectorAll('.parallax-img,.service-parallax')];
 function onScrollMotion(){
@@ -122,25 +131,15 @@ function onScrollMotion(){
     const service=img.classList.contains('service-parallax');
     img.style.transform=`translate3d(0,${-c*(service?34:20)}px,0) scale(${service?1.12:1.04})`;
   });
-
-  /* Exact visible Orkan footer motion: onInView, start end -> end end, y -200 -> 0. */
-  if(footerShell){
-    const top=documentTop(footerShell);
-    const h=footerShell.offsetHeight||vh*.7;
-    const progress=clamp01((scrollY+vh-top)/h);
-    footerShell.style.transform=`translate3d(0,${-200*(1-progress)}px,0)`;
-  }
   ticking=false;
 }
 addEventListener('scroll',()=>{if(!ticking){ticking=true;requestAnimationFrame(onScrollMotion)}},{passive:true});
 addEventListener('resize',()=>requestAnimationFrame(onScrollMotion),{passive:true});
 
-/* Orkan testimonial slider. */
 const slides=[...document.querySelectorAll('.testimonial')],dots=[...document.querySelectorAll('.testimonial-dots button')];let idx=0,timer,down=null;
 function show(i){idx=(i+slides.length)%slides.length;slides.forEach((s,n)=>s.classList.toggle('active',n===idx));dots.forEach((d,n)=>d.classList.toggle('active',n===idx));clearTimeout(timer);timer=setTimeout(()=>show(idx+1),5000)}
 dots.forEach((d,i)=>d.addEventListener('click',()=>show(i)));const stage=document.getElementById('carousel');stage?.addEventListener('pointerdown',e=>down=e.clientX);stage?.addEventListener('pointerup',e=>{if(down===null)return;const dx=e.clientX-down;if(Math.abs(dx)>45)show(idx+(dx<0?1:-1));down=null});show(0);
 
-/* Orkan ticker: velocity 25px/s, 16px desktop gap / 8px mobile. */
 const ticker=document.querySelector('.ticker-track');
 function syncTickerVelocity(){if(!ticker)return;const cycle=ticker.scrollWidth/2;if(cycle>0)ticker.style.animationDuration=`${cycle/25}s`}
 if(ticker){const imgs=[...ticker.querySelectorAll('img')];let pending=imgs.filter(i=>!i.complete).length;if(!pending)requestAnimationFrame(syncTickerVelocity);else imgs.forEach(i=>{if(!i.complete)i.addEventListener('load',()=>{if(--pending===0)syncTickerVelocity()},{once:true})});addEventListener('resize',syncTickerVelocity,{passive:true})}
