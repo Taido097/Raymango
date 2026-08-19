@@ -1,11 +1,9 @@
-/* Final hero override. This stylesheet is already linked by index.html.
-   Use a higher-specificity !important rule so script.js's later
-   `background:#000!important` shorthand cannot erase the hero image. */
+/* Reliable hero image using an existing Raymango-hosted Squarespace asset. */
 html body main .hero .hero-bg{
   background-color:#000!important;
-  background-image:url('/images/RAY56200.jpg')!important;
+  background-image:url('https://images.squarespace-cdn.com/content/v1/66a856f13424f06b8fa96d9a/aa9c7205-18e9-4ef9-8b6a-c17a4c1a7a3b/_AY_4416.jpg?format=2500w')!important;
   background-size:cover!important;
-  background-position:center 48%!important;
+  background-position:center center!important;
   background-repeat:no-repeat!important;
   overflow:hidden!important;
   transform-origin:center center;
@@ -24,7 +22,7 @@ html body main .hero .hero-bg>img{
 }
 
 @media(max-width:809px){
-  html body main .hero .hero-bg{background-position:center 45%!important}
+  html body main .hero .hero-bg{background-position:center center!important}
 }
 
 @media(prefers-reduced-motion:reduce){
