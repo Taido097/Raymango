@@ -1,9 +1,7 @@
 (()=>{
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const ORKAN_EASE='cubic-bezier(.12,.23,.27,1)';
-const VIDEO_BASE='https://video.squarespace-cdn.com/content/v1/66a856f13424f06b8fa96d9a/ec8a32f9-7f3a-4f19-b684-1cf8f570d3b8';
-const VIDEO_PLAYLIST=`${VIDEO_BASE}/playlist.m3u8`;
-const VIDEO_POSTER=`${VIDEO_BASE}/thumbnail`;
+const RAYMOND_IMAGE='https://images.squarespace-cdn.com/content/v1/66a856f13424f06b8fa96d9a/12aa1fc0-724f-4c81-8b99-71a916d0b227/RAY68424.jpg?format=2500w';
 
 const motionStyle=document.createElement('style');
 motionStyle.textContent=`
@@ -14,22 +12,18 @@ motionStyle.textContent=`
 .fit-image{object-fit:contain!important;object-position:center!important;width:100%!important;height:100%!important;margin:0!important;transform:none!important;filter:none!important}
 .work-card:hover .fit-image,.testimonial.active .fit-image{transform:none!important}
 
-/* Real Raymango homepage video, full-bleed like Orkan's opening media. */
-.hero-bg{background:#000!important;overflow:hidden!important}
-.hero-bg .hero-video{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;object-fit:cover!important;object-position:center center!important;filter:brightness(.72)!important;will-change:transform;background:#000}
+/* Same Raymond image in both opening sections. */
+.hero-bg,.about-bg{background:#000!important;overflow:hidden!important}
+.hero-bg .raymond-hero{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;margin:0!important;object-fit:cover!important;object-position:center 38%!important;filter:grayscale(1) contrast(1.08) brightness(.68)!important;will-change:transform}
+.about-bg .raymond-profile{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;margin:0!important;object-fit:cover!important;object-position:center 38%!important;filter:grayscale(1) contrast(1.04) brightness(.74)!important;will-change:transform}
+.hero-content{color:#f2561d!important}
+.hero-copy,.hero-sign{color:#f2561d!important}
 
-/* Raymond section now fills the complete frame edge-to-edge. */
-.about-bg{background:#000!important;overflow:hidden!important}
-.about-bg .profile-fill{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;margin:0!important;object-fit:cover!important;object-position:center center!important;filter:brightness(.78)!important;will-change:transform}
-
-/* Keep the continuous footer strip horizontal, but use portrait frames. */
+/* Keep the continuous footer strip horizontal, with portrait frames. */
 .orkan-footer-shell .ticker-track{align-items:center!important}
 .orkan-footer-shell .ticker-track img{width:150px!important;min-width:150px!important;height:216px!important;flex:0 0 150px!important;object-fit:cover!important;object-position:center!important}
-@media(max-width:809px){
- .orkan-footer-shell .ticker-track img{width:82px!important;min-width:82px!important;height:110px!important;flex-basis:82px!important}
-}
+@media(max-width:809px){.orkan-footer-shell .ticker-track img{width:82px!important;min-width:82px!important;height:110px!important;flex-basis:82px!important}}
 
-/* Orkan footer geometry and initial entrance state. */
 .orkan-footer-shell{height:70vh;position:relative;z-index:2;background:#000;overflow:hidden;will-change:transform;transform:translate3d(0,-200px,0)}
 .orkan-footer-shell .footer{height:100%!important;min-height:0!important;background:#000!important;color:#fff!important;padding:24px!important;display:flex!important;flex-direction:column!important;justify-content:space-between!important;overflow:visible!important}
 .orkan-footer-shell .footer a{color:#fff!important}
@@ -53,59 +47,28 @@ motionStyle.textContent=`
 `;
 document.head.appendChild(motionStyle);
 
-/* Replace the temporary hero image with Raymango's actual Squarespace-hosted homepage video. */
+/* Replace any previous hero video with Raymond's photo and use the same source in About. */
 const heroBg=document.querySelector('.hero-bg');
-const oldHeroImg=heroBg?.querySelector('img');
-let heroVideo=null;
+let heroImg=heroBg?.querySelector('img');
+const oldVideo=heroBg?.querySelector('video');
 if(heroBg){
-  heroVideo=document.createElement('video');
-  heroVideo.className='hero-video';
-  heroVideo.autoplay=true;
-  heroVideo.muted=true;
-  heroVideo.loop=true;
-  heroVideo.playsInline=true;
-  heroVideo.setAttribute('webkit-playsinline','');
-  heroVideo.setAttribute('aria-hidden','true');
-  heroVideo.poster=VIDEO_POSTER;
-  if(oldHeroImg)oldHeroImg.replaceWith(heroVideo); else heroBg.prepend(heroVideo);
-
-  const useNative=heroVideo.canPlayType('application/vnd.apple.mpegurl');
-  if(useNative){
-    heroVideo.src=VIDEO_PLAYLIST;
-    heroVideo.play().catch(()=>{});
-  }else{
-    const loadHls=()=>{
-      if(window.Hls?.isSupported()){
-        const hls=new window.Hls({enableWorker:true,lowLatencyMode:false});
-        hls.loadSource(VIDEO_PLAYLIST);
-        hls.attachMedia(heroVideo);
-        hls.on(window.Hls.Events.MANIFEST_PARSED,()=>heroVideo.play().catch(()=>{}));
-      }else{
-        heroVideo.poster=VIDEO_POSTER;
-      }
-    };
-    if(window.Hls)loadHls();
-    else{
-      const s=document.createElement('script');
-      s.src='https://cdn.jsdelivr.net/npm/hls.js@1.6.13/dist/hls.min.js';
-      s.onload=loadHls;
-      document.head.appendChild(s);
-    }
-  }
+  if(oldVideo)oldVideo.remove();
+  if(!heroImg){heroImg=document.createElement('img');heroBg.prepend(heroImg)}
+  heroImg.src=RAYMOND_IMAGE;
+  heroImg.alt='Raymond Do of Raymango';
+  heroImg.className='raymond-hero';
 }
-
-/* Orkan-like concise opening copy, rewritten for Raymango. */
-const heroCopy=document.querySelector('.hero-copy');
-const heroSign=document.querySelector('.hero-sign');
-if(heroCopy)heroCopy.textContent='Raymango is a cinematic wedding photography and film studio capturing raw emotion, movement, atmosphere, and the quiet moments that make every celebration feel personal.';
-if(heroSign)heroSign.textContent='CALIFORNIA, UNITED STATES';
-
-/* Raymond's portrait now fills the whole second section. */
 const raymondProfile=document.querySelector('.about-bg img');
 if(raymondProfile){
-  raymondProfile.classList.remove('profile-fit');
-  raymondProfile.classList.add('profile-fill');
+  raymondProfile.src=RAYMOND_IMAGE;
+  raymondProfile.className='raymond-profile';
+  raymondProfile.alt='Raymond Do of Raymango';
 }
+
+const heroCopy=document.querySelector('.hero-copy');
+const heroSign=document.querySelector('.hero-sign');
+if(heroCopy)heroCopy.textContent='Raymango captures weddings through emotion, movement, light, and atmosphere—creating photographs that feel cinematic, honest, and deeply personal.';
+if(heroSign)heroSign.textContent='CALIFORNIA, UNITED STATES';
 
 const footer=document.querySelector('.footer');
 let footerShell=null;
@@ -132,10 +95,9 @@ function spring({from=1,to=0,stiffness=200,damping=70,mass=1,onFrame,onDone}){
   requestAnimationFrame(frame);
 }
 
-/* Same Orkan opening spring, now applied to the video itself. */
-if(heroVideo){
-  heroVideo.style.transform='scale(1.04)';
-  requestAnimationFrame(()=>spring({from:1.04,to:1,stiffness:200,damping:70,mass:1,onFrame:v=>heroVideo.style.transform=`scale(${v})`}));
+if(heroImg){
+  heroImg.style.transform='scale(1.04)';
+  requestAnimationFrame(()=>spring({from:1.04,to:1,stiffness:200,damping:70,mass:1,onFrame:v=>heroImg.style.transform=`scale(${v})`}));
 }
 
 if(footerShell){
@@ -144,10 +106,7 @@ if(footerShell){
     const footerIO=new IntersectionObserver(entries=>entries.forEach(e=>{
       if(!e.isIntersecting)return;
       footerIO.disconnect();
-      footerShell.animate(
-        [{transform:'translate3d(0,-200px,0)'},{transform:'translate3d(0,0,0)'}],
-        {duration:720,easing:ORKAN_EASE,fill:'forwards'}
-      );
+      footerShell.animate([{transform:'translate3d(0,-200px,0)'},{transform:'translate3d(0,0,0)'}],{duration:720,easing:ORKAN_EASE,fill:'forwards'});
     }),{threshold:.01,rootMargin:'0px 0px -2% 0px'});
     footerIO.observe(footerShell);
   }
@@ -173,14 +132,13 @@ function decideFit(img){
 fitCandidates.forEach(decideFit);
 let fitTimer;addEventListener('resize',()=>{clearTimeout(fitTimer);fitTimer=setTimeout(()=>fitCandidates.forEach(decideFit),120)});
 
-let ticking=false;const parallaxEls=[...document.querySelectorAll('.parallax-img,.service-parallax')];
+let ticking=false;const parallaxEls=[...document.querySelectorAll('.service-parallax')];
 function onScrollMotion(){
   const vh=innerHeight;
   parallaxEls.forEach(img=>{
     if(img.classList.contains('fit-image')){img.style.transform='none';return}
     const p=img.parentElement.getBoundingClientRect(),c=(p.top+p.height/2-vh/2)/vh;
-    const service=img.classList.contains('service-parallax');
-    img.style.transform=`translate3d(0,${-c*(service?34:20)}px,0) scale(${service?1.12:1.04})`;
+    img.style.transform=`translate3d(0,${-c*34}px,0) scale(1.12)`;
   });
   ticking=false;
 }
